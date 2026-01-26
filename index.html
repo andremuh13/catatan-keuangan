@@ -233,12 +233,12 @@
                         <input type="text" name="Keterangan" id="input-keterangan" placeholder="Contoh: Indomaret" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:text-white">
                     </div>
                     
-                    <!-- OCR CAMERA BUTTON (IMPROVED) -->
+                    <!-- OCR CAMERA BUTTON -->
                     <div class="flex items-center gap-3">
                         <label class="flex items-center justify-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-4 py-3 rounded-xl cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors w-full border border-dashed border-indigo-300 dark:border-indigo-700">
                             <i class="fas fa-camera text-xl"></i>
                             <span class="text-sm font-bold">Scan Struk (Beta)</span>
-                            <input type="file" id="struk-input" accept="image/*" capture="environment" class="hidden" onchange="processOCR(event)">
+                            <input type="file" id="struk-input" accept="image/*" class="hidden" onchange="processOCR(event)">
                         </label>
                     </div>
                     
@@ -313,7 +313,7 @@
         const SHARED_PIN = '1234'; 
         let scriptURL = localStorage.getItem('appScriptUrl') || ''; 
 
-        let currentUser = null;
+        let currentUser = null; // Don't rely on localStorage immediately to allow init check
         let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
         let chartInstance = null;
         let currentPinInput = "";
@@ -322,6 +322,17 @@
         let currentFile = null;
 
         // --- AUTH & PIN ---
+        // Check session on load
+        window.onload = function() {
+            const savedUser = sessionStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = savedUser;
+                document.getElementById('pin-screen').style.display = 'none';
+                document.getElementById('profile-screen').classList.add('hidden');
+                initApp();
+            }
+        };
+
         function inputPin(num) {
             if (currentPinInput.length < 4) { 
                 currentPinInput += num.toString();
@@ -351,9 +362,20 @@
                 clearPin();
             }
         }
-        function selectProfile(user) { currentUser = user; document.getElementById('profile-screen').classList.add('hidden'); initApp(); }
-        function changeProfile() { document.getElementById('profile-screen').classList.remove('hidden'); }
-        function lockApp() { location.reload(); }
+        function selectProfile(user) { 
+            currentUser = user; 
+            sessionStorage.setItem('currentUser', user); // PERSIST SESSION
+            document.getElementById('profile-screen').classList.add('hidden'); 
+            initApp(); 
+        }
+        function changeProfile() { 
+            sessionStorage.removeItem('currentUser'); // Clear session on explicit logout
+            document.getElementById('profile-screen').classList.remove('hidden'); 
+        }
+        function lockApp() { 
+            sessionStorage.removeItem('currentUser'); // Clear session
+            location.reload(); 
+        }
 
         // --- API & DATA ---
         function toggleApiModal() {
@@ -491,7 +513,7 @@
             statusText.innerText = "Memproses gambar...";
 
             try {
-                // 1. Resize Image
+                // 1. Resize Image (600px width max for speed/memory)
                 const resizedImage = await resizeImage(file);
                 
                 // Show Preview
@@ -527,7 +549,7 @@
                      matches.forEach(m => {
                          let clean = m.replace(/[^0-9]/g, ''); 
                          let val = parseInt(clean);
-                         // Filter illogical numbers
+                         // Filter illogical numbers (e.g. > 1000 and < 50 million)
                          if (val > 1000 && val < 50000000) possibleAmounts.push(val);
                      });
                 }
@@ -558,7 +580,7 @@
             }
         }
 
-        // Helper: Resize Image to max 800px (Prevents browser crash)
+        // Helper: Resize Image
         function resizeImage(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -566,13 +588,13 @@
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 800;
+                        const MAX_WIDTH = 600; // Lower resolution for better mobile performance
                         const scaleSize = MAX_WIDTH / img.width;
                         canvas.width = MAX_WIDTH;
                         canvas.height = img.height * scaleSize;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                        resolve(canvas.toDataURL('image/jpeg', 0.6)); // Lower quality
                     };
                     img.src = e.target.result;
                 };
