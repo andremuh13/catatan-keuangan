@@ -61,13 +61,14 @@
     <div id="pin-screen" class="fixed inset-0 z-[70] bg-indigo-600 flex flex-col items-center justify-center text-white transition-transform duration-500">
         <img src="https://raw.githubusercontent.com/andremuh13/catatan-keuangan/refs/heads/main/blue%20minimalist%20money%20location%20logo.png" alt="Logo" class="w-24 h-24 mb-4 rounded-2xl shadow-lg bg-white p-2">
         <h2 class="text-3xl font-bold mb-2">Keluarga</h2>
-        <p class="mb-8 text-indigo-200">Masukkan PIN</p>
+        <p class="mb-8 text-indigo-200" id="pin-instruction">Masukkan PIN</p>
         <div class="flex gap-4 mb-10">
             <div class="w-4 h-4 rounded-full bg-white/30 pin-dot transition-all duration-200 border-2 border-transparent"></div>
             <div class="w-4 h-4 rounded-full bg-white/30 pin-dot transition-all duration-200 border-2 border-transparent"></div>
             <div class="w-4 h-4 rounded-full bg-white/30 pin-dot transition-all duration-200 border-2 border-transparent"></div>
             <div class="w-4 h-4 rounded-full bg-white/30 pin-dot transition-all duration-200 border-2 border-transparent"></div>
         </div>
+        
         <div class="grid grid-cols-3 gap-6 w-64">
             <button onclick="inputPin(1)" class="h-16 w-16 rounded-full border border-white/20 text-2xl active:bg-white/40 active:scale-95 transition-all hover:bg-white/10">1</button>
             <button onclick="inputPin(2)" class="h-16 w-16 rounded-full border border-white/20 text-2xl active:bg-white/40 active:scale-95 transition-all hover:bg-white/10">2</button>
@@ -342,10 +343,9 @@
     </div>
 
     <script>
-        // --- KONFIGURASI ---
+        // --- KONFIGURASI (HARDCODE URL DI SINI) ---
         const scriptURL = 'https://script.google.com/macros/s/AKfycbxkZD46jYRqueHn3RbX87IsHKLbyAZwIvdadh3GgWv9dqdOLkBdF4Nd-bnH-jkgm4311Q/exec'; 
-        const SHARED_PIN = '1234'; 
-        // -------------------
+        // ------------------------------------------
 
         let currentUser = null; 
         let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
@@ -385,27 +385,12 @@
         }
         
         async function checkPinServer() {
-            // Karena sudah hardcode URL, kita validasi langsung ke server atau lokal
-            // Disini karena "otomatis", kita pakai validasi server jika bisa, atau lokal jika server belum ada
             if(!scriptURL || scriptURL === 'PASTE_URL_WEB_APP_DISINI') {
-                 // Fallback local jika belum setup kodingan
-                 if (currentPinInput === SHARED_PIN) {
-                    sessionPin = currentPinInput;
-                    sessionStorage.setItem('sessionPin', sessionPin);
-                    document.getElementById('pin-screen').style.transform = 'translateY(-100%)'; 
-                    document.getElementById('profile-screen').classList.remove('hidden'); 
-                    clearPin();
-                 } else {
-                    showToast("PIN Salah!");
-                    const screen = document.getElementById('pin-screen');
-                    screen.classList.add('animate-shake');
-                    setTimeout(() => screen.classList.remove('animate-shake'), 400);
-                    clearPin();
-                 }
+                 showToast("Edit URL di kode HTML dulu!");
+                 clearPin();
                  return;
             }
 
-            // Validasi Server
             const instruction = document.querySelector('#pin-screen p');
             const originalText = instruction.innerText;
             instruction.innerText = "Memverifikasi...";
@@ -425,21 +410,12 @@
                     throw new Error("PIN Salah");
                 }
             } catch (e) {
-                // Fallback ke lokal jika offline/error
-                if (currentPinInput === SHARED_PIN) {
-                    sessionPin = currentPinInput;
-                    sessionStorage.setItem('sessionPin', sessionPin);
-                    document.getElementById('pin-screen').style.transform = 'translateY(-100%)';
-                    document.getElementById('profile-screen').classList.remove('hidden');
-                    clearPin();
-                } else {
-                    instruction.innerText = "PIN Salah";
-                    const screen = document.getElementById('pin-screen');
-                    screen.classList.add('animate-shake');
-                    setTimeout(() => screen.classList.remove('animate-shake'), 400);
-                    clearPin();
-                    setTimeout(() => instruction.innerText = originalText, 1000);
-                }
+                instruction.innerText = "Gagal Koneksi / PIN Salah";
+                const screen = document.getElementById('pin-screen');
+                screen.classList.add('animate-shake');
+                setTimeout(() => screen.classList.remove('animate-shake'), 400);
+                clearPin();
+                setTimeout(() => instruction.innerText = originalText, 1000);
             }
         }
         
@@ -750,7 +726,7 @@
                 { Waktu: new Date().toISOString(), User: 'Suami', Tipe: 'Pengeluaran', Kategori: 'Pulsa/Kuota', Jumlah: 20000, Keterangan: 'Isi Pulsa' },
                 { Waktu: new Date(Date.now()-3600000).toISOString(), User: 'Suami', Tipe: 'Pengeluaran', Kategori: 'Jajan', Jumlah: 50000, Keterangan: 'Makan Siang' }, 
                 { Waktu: new Date(Date.now()-86400000).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Belanja', Jumlah: 2000000, Keterangan: 'Belanja Bulanan' },
-                { Waktu: new Date(Date.now()-172800000).toISOString(), User: 'Suami', Tipe: 'Pengeluaran', Kategori: 'Bensin', Jumlah: 100000, Keterangan: 'Isi Bensin Mobil' },
+                { Waktu: new Date(Date.now()-172800000).toISOString(), User: 'Suami', Tipe: 'Pengeluaran', Kategori: 'Transport', Jumlah: 100000, Keterangan: 'Isi Bensin Mobil' },
                 { Waktu: new Date(Date.now()-345600000).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Anak', Jumlah: 500000, Keterangan: 'Susu & Popok' },
             ];
             transactions=tr; 
@@ -842,21 +818,8 @@
             }
         }
 
-        // --- CALCULATOR ---
-        function toggleCalculator() { const m = document.getElementById('calc-modal'); m.classList.toggle('hidden'); document.getElementById('calc-results').classList.add('hidden'); }
-        function calculateAllocation() {
-            const incS = Number(document.getElementById('calc-income-suami').value || 0);
-            const incI = Number(document.getElementById('calc-income-istri').value || 0);
-            if(incS === 0 && incI === 0) return;
-            const total = incS + incI;
-            document.getElementById('res-50').innerText = formatRupiah(total * 0.5);
-            document.getElementById('res-40').innerText = formatRupiah(total * 0.4);
-            document.getElementById('res-10').innerText = formatRupiah(incI * 0.1);
-            document.getElementById('calc-results').classList.remove('hidden');
-        }
-
         function syncData() {
-            if(!scriptURL || scriptURL === 'PASTE_URL_WEB_APP_DISINI') { toggleApiModal(); showToast("Masukkan URL Database dulu!"); return; }
+            if(!scriptURL || scriptURL === 'PASTE_URL_WEB_APP_DISINI') { showToast("Edit URL di kode HTML dulu!"); return; }
             const icon = document.getElementById('sync-icon'); const status = document.getElementById('sync-status');
             icon.classList.add('fa-spin'); 
             fetch(`${scriptURL}?pin=${sessionPin}`)
@@ -872,7 +835,7 @@
         const form = document.getElementById('transaction-form');
         form.addEventListener('submit', e => {
             e.preventDefault();
-            if(!scriptURL || scriptURL === 'PASTE_URL_WEB_APP_DISINI') { toggleApiModal(); showToast("Hubungkan Database dulu!"); return; }
+            if(!scriptURL || scriptURL === 'PASTE_URL_WEB_APP_DISINI') { showToast("Edit URL di kode HTML dulu!"); return; }
             const btn = document.getElementById('btn-submit'); const loader = document.getElementById('submit-loader');
             btn.disabled = true; loader.classList.remove('hidden');
             
@@ -880,7 +843,13 @@
             fd.append('pin', sessionPin);
             const data = Object.fromEntries(fd.entries()); 
             data.Waktu = new Date().toISOString();
-            if (currentFile) data.Keterangan = (data.Keterangan || "") + " [Ada Foto Struk]";
+            
+            // Handle image logic - append text to Keterangan if file selected
+            if (currentFile) {
+                data.Keterangan = (data.Keterangan || "") + " [Ada Foto Struk]";
+                // NOTE: We are NOT uploading the actual file to GAS here because it requires backend changes.
+                // We just mark it in the text.
+            }
 
             fetch(scriptURL, { method: 'POST', body: fd }).then(r => r.json()).then(res => {
                 if(res.result === 'success') {
@@ -907,6 +876,42 @@
         }
         function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
         function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 3000); }
+
+        function toggleApiModal() {
+            // Functionality removed as per request to hardcode URL
+             showToast("Edit URL langsung di kode HTML!");
+        }
+        function saveApiUrl() {
+            // Functionality removed
+        }
+        
+        // CALCULATOR FUNCTIONS
+        function toggleCalculator() { const m = document.getElementById('calc-modal'); m.classList.toggle('hidden'); document.getElementById('calc-results').classList.add('hidden'); }
+        function calculateAllocation() {
+            const incS = Number(document.getElementById('calc-income-suami').value || 0);
+            const incI = Number(document.getElementById('calc-income-istri').value || 0);
+            if(incS === 0 && incI === 0) return;
+            const total = incS + incI;
+            document.getElementById('res-50').innerText = formatRupiah(total * 0.5);
+            document.getElementById('res-40').innerText = formatRupiah(total * 0.4);
+            document.getElementById('res-10').innerText = formatRupiah(incI * 0.1);
+            document.getElementById('calc-results').classList.remove('hidden');
+        }
+        
+        // FIXED EXPENSES FUNCTIONS
+        function toggleFixedExpenses() { document.getElementById('fixed-expenses-modal').classList.toggle('hidden'); }
+        function saveFixedExpenses() {
+            fixedExpenses = {
+                groceries: Number(document.getElementById('fix-groceries').value || 0),
+                bills: Number(document.getElementById('fix-bills').value || 0),
+                transport: Number(document.getElementById('fix-transport').value || 0),
+                data: Number(document.getElementById('fix-data').value || 0)
+            };
+            localStorage.setItem('fixedExpenses', JSON.stringify(fixedExpenses));
+            showToast("Pos Tetap Disimpan!");
+            toggleFixedExpenses();
+            // No budget render anymore, just toast
+        }
     </script>
 </body>
 </html>
