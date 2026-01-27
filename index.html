@@ -111,16 +111,47 @@
         </div>
     </div>
 
-    <!-- API URL MODAL -->
-    <div id="api-modal" class="fixed inset-0 z-[90] bg-black/80 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+    <!-- FIXED EXPENSES MODAL -->
+    <div id="fixed-expenses-modal" class="fixed inset-0 z-[80] bg-black/80 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white dark:bg-darksurface w-full max-w-sm rounded-2xl p-6 shadow-2xl transform transition-all scale-100">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold dark:text-white flex items-center gap-2"><i class="fas fa-link text-blue-500"></i> Hubungkan Database</h3>
-                <button onclick="toggleApiModal()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+                <h3 class="text-lg font-bold dark:text-white flex items-center gap-2"><i class="fas fa-file-invoice-dollar text-blue-500"></i> Pos Tetap (Rutin)</h3>
+                <button onclick="toggleFixedExpenses()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Paste URL Web App dari Google Apps Script (akhiran /exec) di sini:</p>
-            <input type="text" id="api-url-input" placeholder="https://script.google.com/..." class="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl text-sm bg-gray-50 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none mb-4">
-            <button onclick="saveApiUrl()" class="w-full bg-blue-600 text-white p-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition-colors">Simpan & Hubungkan</button>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Masukkan pengeluaran rutin pasti.</p>
+            <div class="space-y-3 mb-6">
+                <div><label class="text-xs text-gray-500 font-bold ml-1">Belanja Bulanan</label><input type="number" id="fix-groceries" class="w-full p-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-white text-sm"></div>
+                <div><label class="text-xs text-gray-500 font-bold ml-1">Listrik & Air</label><input type="number" id="fix-bills" class="w-full p-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-white text-sm"></div>
+                <div><label class="text-xs text-gray-500 font-bold ml-1">Transport Tetap</label><input type="number" id="fix-transport" class="w-full p-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-white text-sm"></div>
+                <div><label class="text-xs text-gray-500 font-bold ml-1">Pulsa & Data</label><input type="number" id="fix-data" class="w-full p-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 dark:text-white text-sm"></div>
+            </div>
+            <button onclick="saveFixedExpenses()" class="w-full bg-blue-600 text-white p-3 rounded-xl font-bold shadow-lg">Simpan</button>
+        </div>
+    </div>
+
+    <!-- CALCULATOR MODAL -->
+    <div id="calc-modal" class="fixed inset-0 z-[80] bg-black/80 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white dark:bg-darksurface w-full max-w-sm rounded-2xl p-6 shadow-2xl transform transition-all scale-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold dark:text-white flex items-center gap-2"><i class="fas fa-calculator text-indigo-500"></i> Alokasi Gaji</h3>
+                <button onclick="toggleCalculator()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="space-y-3 mb-4">
+                <div><label class="text-xs text-gray-500 font-bold ml-1">Gaji Suami</label><input type="number" id="calc-income-suami" class="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl text-lg font-bold bg-gray-50 dark:bg-gray-700 dark:text-white"></div>
+                <div><label class="text-xs text-gray-500 font-bold ml-1">Gaji Istri</label><input type="number" id="calc-income-istri" class="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-xl text-lg font-bold bg-gray-50 dark:bg-gray-700 dark:text-white"></div>
+            </div>
+            <button onclick="calculateAllocation()" class="w-full bg-indigo-600 text-white p-3 rounded-xl font-bold mb-6">Hitung</button>
+            <div id="calc-results" class="space-y-3 hidden animate-pulse">
+                <div class="bg-emerald-50 dark:bg-emerald-900/30 p-3 rounded-xl border border-emerald-100 dark:border-emerald-800">
+                    <div class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">50% Tabungan</div><div class="text-xl font-bold text-emerald-700 dark:text-emerald-300" id="res-50">Rp 0</div>
+                </div>
+                <div class="bg-blue-50 dark:bg-blue-900/30 p-3 rounded-xl border border-blue-100 dark:border-blue-800">
+                    <div class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase">40% Kebutuhan</div><div class="text-xl font-bold text-blue-700 dark:text-blue-300" id="res-40">Rp 0</div>
+                </div>
+                <div class="bg-purple-50 dark:bg-purple-900/30 p-3 rounded-xl border border-purple-100 dark:border-purple-800">
+                    <div class="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase">10% Keinginan (Istri)</div><div class="text-xl font-bold text-purple-700 dark:text-purple-300" id="res-10">Rp 0</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -283,8 +314,8 @@
                         <div class="bg-indigo-100 p-3 rounded-full text-indigo-600"><i class="fas fa-user-circle text-xl"></i></div>
                         <div><div class="text-sm text-gray-500">Login Sebagai</div><div class="font-bold dark:text-white" id="setting-user-display">User</div></div>
                     </div>
-                    <button onclick="toggleApiModal()" class="w-full text-left flex items-center gap-3 p-2 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-lg text-blue-600">
-                        <i class="fas fa-link text-xl w-6"></i><div><div class="font-semibold">Hubungkan Database</div><div class="text-xs text-blue-400">Masukkan URL Apps Script</div></div>
+                    <button onclick="toggleCalculator()" class="w-full text-left flex items-center gap-3 p-2 hover:bg-emerald-50 dark:hover:bg-gray-700 rounded-lg text-emerald-600">
+                        <i class="fas fa-calculator text-xl w-6"></i><div><div class="font-semibold">Kalkulator Gaji</div></div>
                     </button>
                     <button onclick="simulateData()" class="w-full text-left flex items-center gap-3 p-2 hover:bg-blue-50 dark:hover:bg-gray-700 rounded-lg text-blue-600">
                         <i class="fas fa-magic text-xl w-6"></i><div><div class="font-semibold">Muat Data Simulasi</div></div>
@@ -311,19 +342,21 @@
     </div>
 
     <script>
+        // --- KONFIGURASI ---
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbxkZD46jYRqueHn3RbX87IsHKLbyAZwIvdadh3GgWv9dqdOLkBdF4Nd-bnH-jkgm4311Q/exec'; 
         const SHARED_PIN = '1234'; 
-        let scriptURL = localStorage.getItem('appScriptUrl') || ''; 
+        // -------------------
 
-        let currentUser = null; // Don't rely on localStorage immediately to allow init check
+        let currentUser = null; 
         let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
         let chartInstance = null;
         let currentPinInput = "";
         let currentHistoryFilter = 'all';
         let showIncome = true; 
         let currentFile = null;
+        let sessionPin = sessionStorage.getItem('sessionPin') || '';
 
         // --- AUTH & PIN ---
-        // Check session on load
         window.onload = function() {
             const savedUser = sessionStorage.getItem('currentUser');
             if (savedUser) {
@@ -338,7 +371,7 @@
             if (currentPinInput.length < 4) { 
                 currentPinInput += num.toString();
                 updatePinDots();
-                if (currentPinInput.length === 4) setTimeout(checkPin, 200);
+                if (currentPinInput.length === 4) setTimeout(checkPinServer, 200);
             }
         }
         function backspacePin() { if (currentPinInput.length > 0) { currentPinInput = currentPinInput.slice(0, -1); updatePinDots(); } }
@@ -350,44 +383,79 @@
                 dot.classList.toggle('bg-white/30', idx >= currentPinInput.length);
             });
         }
-        function checkPin() {
-            if (currentPinInput === SHARED_PIN) {
-                document.getElementById('pin-screen').style.transform = 'translateY(-100%)'; 
-                document.getElementById('profile-screen').classList.remove('hidden'); 
-                clearPin();
-            } else {
-                showToast("PIN Salah!");
-                const screen = document.getElementById('pin-screen');
-                screen.classList.add('animate-shake');
-                setTimeout(() => screen.classList.remove('animate-shake'), 400);
-                clearPin();
+        
+        async function checkPinServer() {
+            // Karena sudah hardcode URL, kita validasi langsung ke server atau lokal
+            // Disini karena "otomatis", kita pakai validasi server jika bisa, atau lokal jika server belum ada
+            if(!scriptURL || scriptURL === 'PASTE_URL_WEB_APP_DISINI') {
+                 // Fallback local jika belum setup kodingan
+                 if (currentPinInput === SHARED_PIN) {
+                    sessionPin = currentPinInput;
+                    sessionStorage.setItem('sessionPin', sessionPin);
+                    document.getElementById('pin-screen').style.transform = 'translateY(-100%)'; 
+                    document.getElementById('profile-screen').classList.remove('hidden'); 
+                    clearPin();
+                 } else {
+                    showToast("PIN Salah!");
+                    const screen = document.getElementById('pin-screen');
+                    screen.classList.add('animate-shake');
+                    setTimeout(() => screen.classList.remove('animate-shake'), 400);
+                    clearPin();
+                 }
+                 return;
+            }
+
+            // Validasi Server
+            const instruction = document.querySelector('#pin-screen p');
+            const originalText = instruction.innerText;
+            instruction.innerText = "Memverifikasi...";
+            
+            try {
+                const res = await fetch(`${scriptURL}?action=login&pin=${currentPinInput}`);
+                const data = await res.json();
+                
+                if (data.result === 'success') {
+                    sessionPin = currentPinInput;
+                    sessionStorage.setItem('sessionPin', sessionPin);
+                    document.getElementById('pin-screen').style.transform = 'translateY(-100%)';
+                    document.getElementById('profile-screen').classList.remove('hidden');
+                    clearPin();
+                    syncData(); 
+                } else {
+                    throw new Error("PIN Salah");
+                }
+            } catch (e) {
+                // Fallback ke lokal jika offline/error
+                if (currentPinInput === SHARED_PIN) {
+                    sessionPin = currentPinInput;
+                    sessionStorage.setItem('sessionPin', sessionPin);
+                    document.getElementById('pin-screen').style.transform = 'translateY(-100%)';
+                    document.getElementById('profile-screen').classList.remove('hidden');
+                    clearPin();
+                } else {
+                    instruction.innerText = "PIN Salah";
+                    const screen = document.getElementById('pin-screen');
+                    screen.classList.add('animate-shake');
+                    setTimeout(() => screen.classList.remove('animate-shake'), 400);
+                    clearPin();
+                    setTimeout(() => instruction.innerText = originalText, 1000);
+                }
             }
         }
+        
         function selectProfile(user) { 
             currentUser = user; 
-            sessionStorage.setItem('currentUser', user); // PERSIST SESSION
+            sessionStorage.setItem('currentUser', user); 
             document.getElementById('profile-screen').classList.add('hidden'); 
             initApp(); 
         }
         function changeProfile() { 
-            sessionStorage.removeItem('currentUser'); // Clear session on explicit logout
+            sessionStorage.removeItem('currentUser'); 
             document.getElementById('profile-screen').classList.remove('hidden'); 
         }
         function lockApp() { 
-            sessionStorage.removeItem('currentUser'); // Clear session
+            sessionStorage.removeItem('currentUser'); 
             location.reload(); 
-        }
-
-        // --- API & DATA ---
-        function toggleApiModal() {
-            const modal = document.getElementById('api-modal'); modal.classList.toggle('hidden');
-            if(!modal.classList.contains('hidden')) document.getElementById('api-url-input').value = scriptURL;
-        }
-        function saveApiUrl() {
-            const url = document.getElementById('api-url-input').value.trim();
-            if(!url.startsWith('http')) { showToast("URL tidak valid!"); return; }
-            scriptURL = url; localStorage.setItem('appScriptUrl', scriptURL);
-            showToast("Database Terhubung!"); toggleApiModal(); syncData();
         }
 
         // --- APP LOGIC ---
@@ -500,12 +568,11 @@
             }
         }
 
-        // --- OCR LOGIC (UPDATED WITH RESIZING & AUTO DETECT) ---
+        // --- OCR LOGIC ---
         async function processOCR(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            // UI Feedback
             const modal = document.getElementById('ocr-modal');
             const statusText = document.getElementById('ocr-status-text');
             const progressBar = document.getElementById('ocr-progress');
@@ -514,15 +581,11 @@
             statusText.innerText = "Memproses gambar...";
 
             try {
-                // 1. Resize Image (600px width max for speed/memory)
                 const resizedImage = await resizeImage(file);
-                
-                // Show Preview
                 document.getElementById('preview-image').src = resizedImage;
                 document.getElementById('preview-container').classList.remove('hidden');
                 currentFile = file;
 
-                // 2. Init Tesseract
                 statusText.innerText = "Menyiapkan mesin OCR...";
                 const worker = await Tesseract.createWorker('ind', 1, {
                     logger: m => {
@@ -535,27 +598,22 @@
                     }
                 });
                 
-                // 3. Recognize
                 const { data: { text } } = await worker.recognize(resizedImage);
                 await worker.terminate();
 
-                // 4. Smart Parse
                 const lines = text.split('\n');
                 const moneyRegex = /[0-9]+[.,][0-9]{3}/g; 
                 let possibleAmounts = [];
                 
-                // Extract possible numbers
                 const matches = text.match(moneyRegex);
                 if(matches) {
                      matches.forEach(m => {
                          let clean = m.replace(/[^0-9]/g, ''); 
                          let val = parseInt(clean);
-                         // Filter illogical numbers (e.g. > 1000 and < 50 million)
                          if (val > 1000 && val < 50000000) possibleAmounts.push(val);
                      });
                 }
 
-                // Assume max amount is total
                 let maxAmount = 0;
                 if(possibleAmounts.length > 0) {
                     maxAmount = Math.max(...possibleAmounts);
@@ -568,7 +626,6 @@
                     showToast("Gagal baca angka. Input manual.");
                 }
 
-                // Guess Description
                 const firstLine = lines.find(l => l.length > 4 && l.length < 30) || "Struk Belanja";
                 const cleanDesc = firstLine.replace(/[^a-zA-Z0-9\s]/g, '').trim();
                 document.getElementById('input-keterangan').value = cleanDesc + " [Scan]";
@@ -581,7 +638,6 @@
             }
         }
 
-        // Helper: Resize Image
         function resizeImage(file) {
             return new Promise((resolve) => {
                 const reader = new FileReader();
@@ -589,13 +645,13 @@
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 600; // Lower resolution for better mobile performance
+                        const MAX_WIDTH = 600; 
                         const scaleSize = MAX_WIDTH / img.width;
                         canvas.width = MAX_WIDTH;
                         canvas.height = img.height * scaleSize;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.6)); // Lower quality
+                        resolve(canvas.toDataURL('image/jpeg', 0.6)); 
                     };
                     img.src = e.target.result;
                 };
@@ -694,9 +750,8 @@
                 { Waktu: new Date().toISOString(), User: 'Suami', Tipe: 'Pengeluaran', Kategori: 'Pulsa/Kuota', Jumlah: 20000, Keterangan: 'Isi Pulsa' },
                 { Waktu: new Date(Date.now()-3600000).toISOString(), User: 'Suami', Tipe: 'Pengeluaran', Kategori: 'Jajan', Jumlah: 50000, Keterangan: 'Makan Siang' }, 
                 { Waktu: new Date(Date.now()-86400000).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Belanja', Jumlah: 2000000, Keterangan: 'Belanja Bulanan' },
-                { Waktu: new Date(Date.now()-172800000).toISOString(), User: 'Suami', Tipe: 'Pengeluaran', Kategori: 'Transport', Jumlah: 100000, Keterangan: 'Isi Bensin Mobil' },
+                { Waktu: new Date(Date.now()-172800000).toISOString(), User: 'Suami', Tipe: 'Pengeluaran', Kategori: 'Bensin', Jumlah: 100000, Keterangan: 'Isi Bensin Mobil' },
                 { Waktu: new Date(Date.now()-345600000).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Anak', Jumlah: 500000, Keterangan: 'Susu & Popok' },
-                { Waktu: new Date(Date.now()-432000000).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Sayur', Jumlah: 50000, Keterangan: 'Beli Bayam & Kangkung' },
             ];
             transactions=tr; 
             localStorage.setItem('transactions', JSON.stringify(tr)); 
@@ -787,36 +842,53 @@
             }
         }
 
+        // --- CALCULATOR ---
+        function toggleCalculator() { const m = document.getElementById('calc-modal'); m.classList.toggle('hidden'); document.getElementById('calc-results').classList.add('hidden'); }
+        function calculateAllocation() {
+            const incS = Number(document.getElementById('calc-income-suami').value || 0);
+            const incI = Number(document.getElementById('calc-income-istri').value || 0);
+            if(incS === 0 && incI === 0) return;
+            const total = incS + incI;
+            document.getElementById('res-50').innerText = formatRupiah(total * 0.5);
+            document.getElementById('res-40').innerText = formatRupiah(total * 0.4);
+            document.getElementById('res-10').innerText = formatRupiah(incI * 0.1);
+            document.getElementById('calc-results').classList.remove('hidden');
+        }
+
         function syncData() {
-            if(!scriptURL.startsWith('http')) { toggleApiModal(); showToast("Masukkan URL Database dulu!"); return; }
+            if(!scriptURL || scriptURL === 'PASTE_URL_WEB_APP_DISINI') { toggleApiModal(); showToast("Masukkan URL Database dulu!"); return; }
             const icon = document.getElementById('sync-icon'); const status = document.getElementById('sync-status');
             icon.classList.add('fa-spin'); 
-            fetch(scriptURL).then(r=>r.json()).then(d => {
-                transactions=d.transactions; // Only need transactions now
-                localStorage.setItem('transactions', JSON.stringify(transactions)); 
-                showToast("Data Updated!"); renderDashboard(); renderHistory(currentHistoryFilter);
-            }).catch(e => showToast("Gagal Sync")).finally(() => { icon.classList.remove('fa-spin'); });
+            fetch(`${scriptURL}?pin=${sessionPin}`)
+                .then(r=>r.json())
+                .then(d => {
+                     if(d.error) { showToast("Sesi habis / PIN Salah"); lockApp(); return; }
+                    transactions=d.transactions; // Only need transactions now
+                    localStorage.setItem('transactions', JSON.stringify(transactions)); 
+                    showToast("Data Updated!"); renderDashboard(); renderHistory(currentHistoryFilter);
+                }).catch(e => showToast("Gagal Sync")).finally(() => { icon.classList.remove('fa-spin'); });
         }
 
         const form = document.getElementById('transaction-form');
         form.addEventListener('submit', e => {
             e.preventDefault();
-            if(!scriptURL.startsWith('http')) { toggleApiModal(); showToast("Hubungkan Database dulu!"); return; }
+            if(!scriptURL || scriptURL === 'PASTE_URL_WEB_APP_DISINI') { toggleApiModal(); showToast("Hubungkan Database dulu!"); return; }
             const btn = document.getElementById('btn-submit'); const loader = document.getElementById('submit-loader');
             btn.disabled = true; loader.classList.remove('hidden');
-            const data = Object.fromEntries(new FormData(form).entries()); 
-            data.Waktu = new Date().toISOString();
             
-            // Handle image logic - append text to Keterangan if file selected
-            if (currentFile) {
-                data.Keterangan = (data.Keterangan || "") + " [Ada Foto Struk]";
-                // NOTE: We are NOT uploading the actual file to GAS here because it requires backend changes.
-                // We just mark it in the text.
-            }
+            const fd = new FormData(e.target);
+            fd.append('pin', sessionPin);
+            const data = Object.fromEntries(fd.entries()); 
+            data.Waktu = new Date().toISOString();
+            if (currentFile) data.Keterangan = (data.Keterangan || "") + " [Ada Foto Struk]";
 
-            fetch(scriptURL, { method: 'POST', body: new FormData(form) }).then(() => {
-                transactions.unshift(data); localStorage.setItem('transactions', JSON.stringify(transactions));
-                showToast("Tersimpan!"); form.reset(); clearImage(); navTo('home'); renderHistory(currentHistoryFilter);
+            fetch(scriptURL, { method: 'POST', body: fd }).then(r => r.json()).then(res => {
+                if(res.result === 'success') {
+                    transactions.unshift(data); localStorage.setItem('transactions', JSON.stringify(transactions));
+                    showToast("Tersimpan!"); form.reset(); clearImage(); navTo('home'); renderDashboard(); renderHistory(currentHistoryFilter);
+                } else {
+                    showToast("Gagal: " + (res.message || "Error Server"));
+                }
             }).catch(() => showToast("Gagal koneksi")).finally(() => { btn.disabled = false; loader.classList.add('hidden'); });
         });
 
