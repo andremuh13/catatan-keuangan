@@ -68,7 +68,6 @@
             <div class="w-4 h-4 rounded-full bg-white/30 pin-dot transition-all duration-200 border-2 border-transparent"></div>
             <div class="w-4 h-4 rounded-full bg-white/30 pin-dot transition-all duration-200 border-2 border-transparent"></div>
         </div>
-        
         <div class="grid grid-cols-3 gap-6 w-64">
             <button onclick="inputPin(1)" class="h-16 w-16 rounded-full border border-white/20 text-2xl active:bg-white/40 active:scale-95 transition-all hover:bg-white/10">1</button>
             <button onclick="inputPin(2)" class="h-16 w-16 rounded-full border border-white/20 text-2xl active:bg-white/40 active:scale-95 transition-all hover:bg-white/10">2</button>
@@ -232,6 +231,10 @@
                         <label class="cursor-pointer"><input type="radio" name="Tipe" value="Pemasukan" class="peer hidden"><div class="p-3 text-center border bg-white dark:bg-gray-800 rounded-xl peer-checked:bg-green-50 peer-checked:border-green-500 peer-checked:text-green-600 dark:border-gray-600 dark:text-gray-300 shadow-sm transition-all"><i class="fas fa-arrow-up mb-1"></i><br>Masuk</div></label>
                     </div>
                     <div>
+                        <label class="text-xs text-gray-500 mb-1 ml-1 block">Tanggal Transaksi</label>
+                        <input type="date" name="TanggalInput" id="input-tanggal" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:text-white">
+                    </div>
+                    <div>
                         <select name="Kategori" id="category-select" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:text-white" required>
                             <optgroup label="🏠 Kebutuhan Rumah">
                                 <option value="Belanja">🛒 Belanja Bulanan</option>
@@ -344,7 +347,7 @@
 
     <script>
         // --- KONFIGURASI (HARDCODE URL DI SINI) ---
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbxkZD46jYRqueHn3RbX87IsHKLbyAZwIvdadh3GgWv9dqdOLkBdF4Nd-bnH-jkgm4311Q/exec'; 
+        const scriptURL = 'PASTE_URL_WEB_APP_DISINI'; 
         // ------------------------------------------
 
         let currentUser = null; 
@@ -439,6 +442,10 @@
             document.getElementById('display-username').innerText = currentUser;
             document.getElementById('setting-user-display').innerText = currentUser;
             document.getElementById('input-user-field').value = currentUser;
+
+            // Set Tanggal Hari Ini sebagai Default
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('input-tanggal').value = today;
             
             const now = new Date();
             const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
@@ -728,6 +735,7 @@
                 { Waktu: new Date(Date.now()-86400000).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Belanja', Jumlah: 2000000, Keterangan: 'Belanja Bulanan' },
                 { Waktu: new Date(Date.now()-172800000).toISOString(), User: 'Suami', Tipe: 'Pengeluaran', Kategori: 'Transport', Jumlah: 100000, Keterangan: 'Isi Bensin Mobil' },
                 { Waktu: new Date(Date.now()-345600000).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Anak', Jumlah: 500000, Keterangan: 'Susu & Popok' },
+                { Waktu: new Date(Date.now()-432000000).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Sayur', Jumlah: 75000, Keterangan: 'Beli Sayur Pasar' },
             ];
             transactions=tr; 
             localStorage.setItem('transactions', JSON.stringify(tr)); 
@@ -841,20 +849,31 @@
             
             const fd = new FormData(e.target);
             fd.append('pin', sessionPin);
-            const data = Object.fromEntries(fd.entries()); 
-            data.Waktu = new Date().toISOString();
             
-            // Handle image logic - append text to Keterangan if file selected
+            // Override Waktu dengan inputan user
+            const inputDate = document.getElementById('input-tanggal').value;
+            const now = new Date();
+            const timePart = now.toTimeString().split(' ')[0]; // Ambil jam:menit:detik saat ini
+            
+            // Buat ISO string dari tanggal input + jam sekarang (agar sorting tetap oke di hari yang sama)
+            // Format input date: YYYY-MM-DD
+            const fullDateTime = `${inputDate}T${timePart}`;
+            
+            const data = Object.fromEntries(fd.entries()); 
+            data.Waktu = new Date(fullDateTime).toISOString();
+            
+            // Handle image logic
             if (currentFile) {
                 data.Keterangan = (data.Keterangan || "") + " [Ada Foto Struk]";
-                // NOTE: We are NOT uploading the actual file to GAS here because it requires backend changes.
-                // We just mark it in the text.
             }
 
             fetch(scriptURL, { method: 'POST', body: fd }).then(r => r.json()).then(res => {
                 if(res.result === 'success') {
                     transactions.unshift(data); localStorage.setItem('transactions', JSON.stringify(transactions));
-                    showToast("Tersimpan!"); form.reset(); clearImage(); navTo('home'); renderDashboard(); renderHistory(currentHistoryFilter);
+                    showToast("Tersimpan!"); form.reset(); clearImage(); 
+                    // Reset tanggal ke hari ini setelah submit
+                    document.getElementById('input-tanggal').value = new Date().toISOString().split('T')[0];
+                    navTo('home'); renderDashboard(); renderHistory(currentHistoryFilter);
                 } else {
                     showToast("Gagal: " + (res.message || "Error Server"));
                 }
@@ -876,14 +895,6 @@
         }
         function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
         function showToast(m) { const t = document.getElementById('toast'); t.innerText = m; t.classList.remove('opacity-0'); setTimeout(() => t.classList.add('opacity-0'), 3000); }
-
-        function toggleApiModal() {
-            // Functionality removed as per request to hardcode URL
-             showToast("Edit URL langsung di kode HTML!");
-        }
-        function saveApiUrl() {
-            // Functionality removed
-        }
         
         // CALCULATOR FUNCTIONS
         function toggleCalculator() { const m = document.getElementById('calc-modal'); m.classList.toggle('hidden'); document.getElementById('calc-results').classList.add('hidden'); }
