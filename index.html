@@ -203,12 +203,13 @@
                         <select name="Kategori" id="category-select" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:text-white" required>
                             <optgroup label="🏠 Kebutuhan Rumah">
                                 <option value="Belanja">🛒 Belanja Bulanan</option>
+                                <option value="Sayur">🥬 Sayur</option>
                                 <option value="Pulsa/Kuota">📱 Pulsa/Kuota</option>
                                 <option value="Listrik">⚡ Listrik & Air</option>
                                 <option value="Anak">👶 Kebutuhan Anak</option>
                             </optgroup>
                             <optgroup label="🚗 Transportasi">
-                                <option value="Bensin">⛽ Bensin</option>
+                                <option value="Transport">⛽ Transport</option>
                                 <option value="Ojol">🛵 Ojek Online</option>
                                 <option value="Service">🔧 Service Kendaraan</option>
                             </optgroup>
@@ -238,7 +239,7 @@
                         <label class="flex items-center justify-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-4 py-3 rounded-xl cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors w-full border border-dashed border-indigo-300 dark:border-indigo-700">
                             <i class="fas fa-camera text-xl"></i>
                             <span class="text-sm font-bold">Scan Struk (Beta)</span>
-                            <input type="file" id="struk-input" accept="image/*" class="hidden" onchange="processOCR(event)">
+                            <input type="file" id="struk-input" accept="image/*" capture="environment" class="hidden" onchange="processOCR(event)">
                         </label>
                     </div>
                     
@@ -693,8 +694,9 @@
                 { Waktu: new Date().toISOString(), User: 'Suami', Tipe: 'Pengeluaran', Kategori: 'Pulsa/Kuota', Jumlah: 20000, Keterangan: 'Isi Pulsa' },
                 { Waktu: new Date(Date.now()-3600000).toISOString(), User: 'Suami', Tipe: 'Pengeluaran', Kategori: 'Jajan', Jumlah: 50000, Keterangan: 'Makan Siang' }, 
                 { Waktu: new Date(Date.now()-86400000).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Belanja', Jumlah: 2000000, Keterangan: 'Belanja Bulanan' },
-                { Waktu: new Date(Date.now()-172800000).toISOString(), User: 'Suami', Tipe: 'Pengeluaran', Kategori: 'Bensin', Jumlah: 100000, Keterangan: 'Isi Bensin Mobil' },
+                { Waktu: new Date(Date.now()-172800000).toISOString(), User: 'Suami', Tipe: 'Pengeluaran', Kategori: 'Transport', Jumlah: 100000, Keterangan: 'Isi Bensin Mobil' },
                 { Waktu: new Date(Date.now()-345600000).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Anak', Jumlah: 500000, Keterangan: 'Susu & Popok' },
+                { Waktu: new Date(Date.now()-432000000).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Sayur', Jumlah: 50000, Keterangan: 'Beli Bayam & Kangkung' },
             ];
             transactions=tr; 
             localStorage.setItem('transactions', JSON.stringify(tr)); 
@@ -767,7 +769,7 @@
                     labels: Object.keys(cats), 
                     datasets: [{ 
                         data: Object.values(cats), 
-                        backgroundColor: ['#4F46E5', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#6366F1', '#14B8A6'], 
+                        backgroundColor: ['#4F46E5', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#6366F1', '#14B8A6', '#FCD34D', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6'], 
                         borderWidth: 0 
                     }] 
                 },
@@ -828,7 +830,7 @@
 
         function formatRupiah(n) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n); }
         function getCategoryIcon(c) { 
-            const m = { 'Pulsa/Kuota': 'fa-mobile-alt', 'Transport': 'fa-motorcycle', 'Belanja': 'fa-shopping-cart', 'Tagihan': 'fa-file-invoice', 'Hiburan': 'fa-film', 'Kesehatan': 'fa-pills', 'Gaji': 'fa-money-bill-wave', 'Bensin': 'fa-gas-pump', 'Ojol': 'fa-motorcycle', 'Service': 'fa-wrench', 'Listrik': 'fa-bolt', 'Internet': 'fa-wifi', 'Jajan': 'fa-ice-cream', 'Sedekah': 'fa-hand-holding-heart', 'Bonus': 'fa-gift', 'Anak': 'fa-child' }; 
+            const m = { 'Pulsa/Kuota': 'fa-mobile-alt', 'Transport': 'fa-gas-pump', 'Belanja': 'fa-shopping-cart', 'Tagihan': 'fa-file-invoice', 'Hiburan': 'fa-film', 'Kesehatan': 'fa-pills', 'Gaji': 'fa-money-bill-wave', 'Bensin': 'fa-gas-pump', 'Ojol': 'fa-motorcycle', 'Service': 'fa-wrench', 'Listrik': 'fa-bolt', 'Internet': 'fa-wifi', 'Jajan': 'fa-ice-cream', 'Sedekah': 'fa-hand-holding-heart', 'Bonus': 'fa-gift', 'Anak': 'fa-child', 'Sayur': 'fa-carrot' }; 
             return m[c] || 'fa-box'; 
         }
         function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
