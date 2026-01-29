@@ -319,6 +319,7 @@
                         <div class="bg-indigo-100 p-3 rounded-full text-indigo-600"><i class="fas fa-user-circle text-xl"></i></div>
                         <div><div class="text-sm text-gray-500">Login Sebagai</div><div class="font-bold dark:text-white" id="setting-user-display">User</div></div>
                     </div>
+                    
                     <button onclick="toggleCalculator()" class="w-full text-left flex items-center gap-3 p-2 hover:bg-emerald-50 dark:hover:bg-gray-700 rounded-lg text-emerald-600">
                         <i class="fas fa-calculator text-xl w-6"></i><div><div class="font-semibold">Kalkulator Gaji</div></div>
                     </button>
@@ -389,12 +390,6 @@
         }
         
         async function checkPinServer() {
-            if(scriptURL === 'https://script.google.com/macros/s/AKfycbxkZD46jYRqueHn3RbX87IsHKLbyAZwIvdadh3GgWv9dqdOLkBdF4Nd-bnH-jkgm4311Q/exec') {
-                 showToast("Edit URL di kode HTML dulu!");
-                 clearPin();
-                 return;
-            }
-
             const instruction = document.querySelector('#pin-screen p');
             const originalText = instruction.innerText;
             instruction.innerText = "Memverifikasi...";
@@ -737,7 +732,6 @@
                 { Waktu: new Date(Date.now()-86400000).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Belanja', Jumlah: 2000000, Keterangan: 'Belanja Bulanan' },
                 { Waktu: new Date(Date.now()-172800000).toISOString(), User: 'Suami', Tipe: 'Pengeluaran', Kategori: 'Transport', Jumlah: 100000, Keterangan: 'Isi Bensin Mobil' },
                 { Waktu: new Date(Date.now()-345600000).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Anak', Jumlah: 500000, Keterangan: 'Susu & Popok' },
-                { Waktu: new Date(Date.now()-432000000).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Sayur', Jumlah: 75000, Keterangan: 'Beli Sayur Pasar' },
             ];
             transactions=tr; 
             localStorage.setItem('transactions', JSON.stringify(tr)); 
@@ -829,7 +823,7 @@
         }
 
         function syncData() {
-            if(!scriptURL || scriptURL === 'https://script.google.com/macros/s/AKfycbxkZD46jYRqueHn3RbX87IsHKLbyAZwIvdadh3GgWv9dqdOLkBdF4Nd-bnH-jkgm4311Q/exec') { showToast("Edit URL di kode HTML dulu!"); return; }
+            if(!scriptURL) { showToast("URL belum disetting di kode!"); return; }
             const icon = document.getElementById('sync-icon'); const status = document.getElementById('sync-status');
             icon.classList.add('fa-spin'); 
             fetch(`${scriptURL}?pin=${sessionPin}`)
@@ -845,7 +839,7 @@
         const form = document.getElementById('transaction-form');
         form.addEventListener('submit', e => {
             e.preventDefault();
-            if(!scriptURL || scriptURL === 'https://script.google.com/macros/s/AKfycbxkZD46jYRqueHn3RbX87IsHKLbyAZwIvdadh3GgWv9dqdOLkBdF4Nd-bnH-jkgm4311Q/exec') { showToast("Edit URL di kode HTML dulu!"); return; }
+            if(!scriptURL) { showToast("URL belum disetting!"); return; }
             const btn = document.getElementById('btn-submit'); const loader = document.getElementById('submit-loader');
             btn.disabled = true; loader.classList.remove('hidden');
             
