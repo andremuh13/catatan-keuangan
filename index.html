@@ -57,7 +57,7 @@
 </head>
 <body class="bg-gray-100 dark:bg-darkbg text-gray-800 dark:text-gray-100 transition-colors duration-300 h-[100dvh] flex justify-center overflow-hidden">
 
-    <!-- PIN Screen -->
+    <!-- PIN Screen (Validasi ke Server) -->
     <div id="pin-screen" class="fixed inset-0 z-[70] bg-indigo-600 flex flex-col items-center justify-center text-white transition-transform duration-500">
         <img src="https://raw.githubusercontent.com/andremuh13/catatan-keuangan/refs/heads/main/blue%20minimalist%20money%20location%20logo.png" alt="Logo" class="w-24 h-24 mb-4 rounded-2xl shadow-lg bg-white p-2">
         <h2 class="text-3xl font-bold mb-2">Keluarga</h2>
@@ -68,6 +68,7 @@
             <div class="w-4 h-4 rounded-full bg-white/30 pin-dot transition-all duration-200 border-2 border-transparent"></div>
             <div class="w-4 h-4 rounded-full bg-white/30 pin-dot transition-all duration-200 border-2 border-transparent"></div>
         </div>
+        
         <div class="grid grid-cols-3 gap-6 w-64">
             <button onclick="inputPin(1)" class="h-16 w-16 rounded-full border border-white/20 text-2xl active:bg-white/40 active:scale-95 transition-all hover:bg-white/10">1</button>
             <button onclick="inputPin(2)" class="h-16 w-16 rounded-full border border-white/20 text-2xl active:bg-white/40 active:scale-95 transition-all hover:bg-white/10">2</button>
@@ -347,7 +348,7 @@
 
     <script>
         // --- KONFIGURASI (HARDCODE URL DI SINI) ---
-        const scriptURL = 'PASTE_URL_WEB_APP_DISINI'; 
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbxkZD46jYRqueHn3RbX87IsHKLbyAZwIvdadh3GgWv9dqdOLkBdF4Nd-bnH-jkgm4311Q/exec'; 
         // ------------------------------------------
 
         let currentUser = null; 
@@ -388,7 +389,7 @@
         }
         
         async function checkPinServer() {
-            if(!scriptURL || scriptURL === 'PASTE_URL_WEB_APP_DISINI') {
+            if(scriptURL === 'https://script.google.com/macros/s/AKfycbxkZD46jYRqueHn3RbX87IsHKLbyAZwIvdadh3GgWv9dqdOLkBdF4Nd-bnH-jkgm4311Q/exec') {
                  showToast("Edit URL di kode HTML dulu!");
                  clearPin();
                  return;
@@ -399,6 +400,7 @@
             instruction.innerText = "Memverifikasi...";
             
             try {
+                // Gunakan URL yang sudah di-hardcode
                 const res = await fetch(`${scriptURL}?action=login&pin=${currentPinInput}`);
                 const data = await res.json();
                 
@@ -827,7 +829,7 @@
         }
 
         function syncData() {
-            if(!scriptURL || scriptURL === 'PASTE_URL_WEB_APP_DISINI') { showToast("Edit URL di kode HTML dulu!"); return; }
+            if(!scriptURL || scriptURL === 'https://script.google.com/macros/s/AKfycbxkZD46jYRqueHn3RbX87IsHKLbyAZwIvdadh3GgWv9dqdOLkBdF4Nd-bnH-jkgm4311Q/exec') { showToast("Edit URL di kode HTML dulu!"); return; }
             const icon = document.getElementById('sync-icon'); const status = document.getElementById('sync-status');
             icon.classList.add('fa-spin'); 
             fetch(`${scriptURL}?pin=${sessionPin}`)
@@ -843,7 +845,7 @@
         const form = document.getElementById('transaction-form');
         form.addEventListener('submit', e => {
             e.preventDefault();
-            if(!scriptURL || scriptURL === 'PASTE_URL_WEB_APP_DISINI') { showToast("Edit URL di kode HTML dulu!"); return; }
+            if(!scriptURL || scriptURL === 'https://script.google.com/macros/s/AKfycbxkZD46jYRqueHn3RbX87IsHKLbyAZwIvdadh3GgWv9dqdOLkBdF4Nd-bnH-jkgm4311Q/exec') { showToast("Edit URL di kode HTML dulu!"); return; }
             const btn = document.getElementById('btn-submit'); const loader = document.getElementById('submit-loader');
             btn.disabled = true; loader.classList.remove('hidden');
             
