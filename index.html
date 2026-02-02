@@ -53,9 +53,6 @@
         
         .progress-fill { transition: width 1s ease-in-out; }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-        
-        .rotate-180 { transform: rotate(180deg); }
-        .transition-transform { transition: transform 0.3s ease; }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-darkbg text-gray-800 dark:text-gray-100 transition-colors duration-300 h-[100dvh] flex justify-center overflow-hidden">
@@ -103,6 +100,16 @@
             </button>
         </div>
         <button onclick="lockApp()" class="mt-12 text-gray-500 hover:text-white flex items-center gap-2"><i class="fas fa-lock"></i> Kunci Aplikasi</button>
+    </div>
+
+    <!-- OCR PROCESSING MODAL -->
+    <div id="ocr-modal" class="fixed inset-0 z-[80] bg-black/80 hidden flex flex-col items-center justify-center p-6 backdrop-blur-sm text-white">
+        <div class="w-16 h-16 border-4 border-white/20 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
+        <h3 class="text-xl font-bold mb-2">Memindai Struk...</h3>
+        <p class="text-sm text-gray-300 text-center" id="ocr-status-text">Menyiapkan mesin OCR...</p>
+        <div class="w-64 bg-gray-700 rounded-full h-2 mt-4 overflow-hidden">
+            <div id="ocr-progress" class="bg-indigo-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
     </div>
 
     <!-- FIXED EXPENSES MODAL -->
@@ -158,12 +165,7 @@
                     <div id="header-avatar" class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold shadow-sm"><i class="fas fa-user"></i></div>
                     <div>
                         <h1 class="text-lg font-bold text-indigo-600 dark:text-indigo-400">Halo, <span id="display-username">User</span></h1>
-                        <!-- NAVIGASI BULAN (NEW) -->
-                        <div class="flex items-center gap-2 mt-1">
-                            <button onclick="changeMonth(-1)" class="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs hover:bg-gray-200"><i class="fas fa-chevron-left"></i></button>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 font-bold" id="current-month-display">Bulan Ini</p>
-                            <button onclick="changeMonth(1)" class="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs hover:bg-gray-200"><i class="fas fa-chevron-right"></i></button>
-                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400" id="current-month-display">Bulan Ini</p>
                     </div>
                 </div>
                 <div class="flex gap-2">
@@ -186,7 +188,7 @@
                             <button onclick="toggleIncomeVisibility()" class="text-white/80 hover:text-white"><i class="fas fa-eye" id="eye-icon"></i></button>
                         </div>
                         <div class="text-3xl font-bold tracking-tight mt-2" id="total-income-display">Rp 0</div>
-                        <div class="text-xs mt-2 bg-white/20 inline-block px-2 py-1 rounded-lg border border-white/20" id="income-period-label">Bulan Ini</div>
+                        <div class="text-xs mt-2 bg-white/20 inline-block px-2 py-1 rounded-lg border border-white/20">Suami + Istri (Bulan Ini)</div>
                     </div>
                 </div>
 
@@ -267,6 +269,21 @@
                         <label class="text-xs text-gray-500 mb-1 ml-1 block">Catatan</label>
                         <input type="text" name="Keterangan" id="input-keterangan" placeholder="Contoh: Indomaret" class="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:text-white">
                     </div>
+                    
+                    <!-- OCR CAMERA BUTTON -->
+                    <div class="flex items-center gap-3">
+                        <label class="flex items-center justify-center gap-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-4 py-3 rounded-xl cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors w-full border border-dashed border-indigo-300 dark:border-indigo-700">
+                            <i class="fas fa-camera text-xl"></i>
+                            <span class="text-sm font-bold">Scan Struk (Beta)</span>
+                            <input type="file" id="struk-input" accept="image/*" capture="environment" class="hidden" onchange="processOCR(event)">
+                        </label>
+                    </div>
+                    
+                    <div id="preview-container" class="hidden mt-2 relative">
+                        <img id="preview-image" src="" alt="Preview" class="w-full h-48 object-cover rounded-xl border border-gray-200 dark:border-gray-600">
+                        <button type="button" onclick="clearImage()" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 w-8 h-8 flex items-center justify-center shadow-lg"><i class="fas fa-times"></i></button>
+                    </div>
+
                     <input type="hidden" name="User" id="input-user-field">
                     <button type="submit" id="btn-submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-xl font-bold shadow-lg transition-transform active:scale-95 flex justify-center items-center gap-2"><span>Simpan Transaksi</span><div class="loader hidden" id="submit-loader"></div></button>
                 </form>
@@ -341,13 +358,12 @@
         let currentHistoryFilter = 'all';
         let showIncome = true; 
         let currentFile = null;
-        let sessionPin = sessionStorage.getItem('sessionPin') || '';
-        let viewDate = new Date(); // NEW: State untuk navigasi bulan
+        let sessionPin = localStorage.getItem('savedPin') || ''; // LOAD CACHED PIN
 
         // --- AUTH & PIN ---
         window.onload = function() {
             const savedUser = sessionStorage.getItem('currentUser');
-            if (savedUser) {
+            if (savedUser && sessionPin) {
                 currentUser = savedUser;
                 document.getElementById('pin-screen').style.display = 'none';
                 document.getElementById('profile-screen').classList.add('hidden');
@@ -378,6 +394,12 @@
                  clearPin();
                  return;
             }
+            
+            // 1. CEK CACHE DULU (Optimistic UI - Instant Unlock)
+            if (sessionPin && currentPinInput === sessionPin) {
+                loginSuccess();
+                return;
+            }
 
             const instruction = document.querySelector('#pin-screen p');
             const originalText = instruction.innerText;
@@ -388,11 +410,10 @@
                 const data = await res.json();
                 
                 if (data.result === 'success') {
+                    // Simpan PIN Benar ke LocalStorage (Bukan Session) agar besok2 instan
                     sessionPin = currentPinInput;
-                    sessionStorage.setItem('sessionPin', sessionPin);
-                    document.getElementById('pin-screen').style.transform = 'translateY(-100%)';
-                    document.getElementById('profile-screen').classList.remove('hidden');
-                    clearPin();
+                    localStorage.setItem('savedPin', sessionPin);
+                    loginSuccess();
                     syncData(); 
                 } else {
                     throw new Error("PIN Salah");
@@ -407,6 +428,12 @@
             }
         }
         
+        function loginSuccess() {
+            document.getElementById('pin-screen').style.transform = 'translateY(-100%)';
+            document.getElementById('profile-screen').classList.remove('hidden');
+            clearPin();
+        }
+        
         function selectProfile(user) { 
             currentUser = user; 
             sessionStorage.setItem('currentUser', user); 
@@ -419,6 +446,7 @@
         }
         function lockApp() { 
             sessionStorage.removeItem('currentUser'); 
+            // Tidak hapus savedPin agar login berikutnya cepat, kecuali user mau logout total
             location.reload(); 
         }
 
@@ -431,9 +459,10 @@
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('input-tanggal').value = today;
             
-            // Set viewDate ke bulan ini saat init
-            viewDate = new Date();
-            
+            const now = new Date();
+            const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            document.getElementById('current-month-display').innerText = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
             const avatar = document.getElementById('header-avatar');
             if(currentUser === 'Istri') {
                 avatar.className = "w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-bold";
@@ -447,12 +476,6 @@
             renderHistory('all');
         }
 
-        // NEW: Navigation for Month
-        function changeMonth(step) {
-            viewDate.setMonth(viewDate.getMonth() + step);
-            renderDashboard();
-        }
-
         function toggleIncomeVisibility() {
             showIncome = !showIncome;
             const icon = document.getElementById('eye-icon');
@@ -461,14 +484,9 @@
         }
 
         function renderDashboard() {
-            // Gunakan viewDate bukan new Date()
-            const currentMonth = viewDate.getMonth();
-            const currentYear = viewDate.getFullYear();
-            
-            // Update Header Bulan
-            const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-            document.getElementById('current-month-display').innerText = `${monthNames[currentMonth]} ${currentYear}`;
-            document.getElementById('income-period-label').innerText = `Suami + Istri (${monthNames[currentMonth]})`;
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
 
             const monthlyData = transactions.filter(t => {
                 const d = new Date(t.Waktu);
@@ -517,7 +535,7 @@
             listContainer.innerHTML = '';
 
             if (Object.keys(categoryExpenses).length === 0) {
-                listContainer.innerHTML = '<div class="text-center text-gray-400 text-sm py-4">Belum ada pengeluaran di bulan ini.</div>';
+                listContainer.innerHTML = '<div class="text-center text-gray-400 text-sm py-4">Belum ada pengeluaran bulan ini.</div>';
             } else {
                 const sortedCats = Object.keys(categoryExpenses).sort((a,b) => categoryExpenses[b] - categoryExpenses[a]);
                 
@@ -545,11 +563,119 @@
             }
         }
 
+        // --- OCR LOGIC ---
+        async function processOCR(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const modal = document.getElementById('ocr-modal');
+            const statusText = document.getElementById('ocr-status-text');
+            const progressBar = document.getElementById('ocr-progress');
+            modal.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            statusText.innerText = "Memproses gambar...";
+
+            try {
+                const resizedImage = await resizeImage(file);
+                document.getElementById('preview-image').src = resizedImage;
+                document.getElementById('preview-container').classList.remove('hidden');
+                currentFile = file;
+
+                statusText.innerText = "Menyiapkan mesin OCR...";
+                const worker = await Tesseract.createWorker('ind', 1, {
+                    logger: m => {
+                        if(m.status === 'recognizing text') {
+                            statusText.innerText = `Membaca teks... ${Math.round(m.progress * 100)}%`;
+                            progressBar.style.width = `${m.progress * 100}%`;
+                        } else {
+                            statusText.innerText = translateStatus(m.status);
+                        }
+                    }
+                });
+                
+                const { data: { text } } = await worker.recognize(resizedImage);
+                await worker.terminate();
+
+                const lines = text.split('\n');
+                const moneyRegex = /[0-9]+[.,][0-9]{3}/g; 
+                let possibleAmounts = [];
+                
+                const matches = text.match(moneyRegex);
+                if(matches) {
+                     matches.forEach(m => {
+                         let clean = m.replace(/[^0-9]/g, ''); 
+                         let val = parseInt(clean);
+                         if (val > 1000 && val < 50000000) possibleAmounts.push(val);
+                     });
+                }
+
+                let maxAmount = 0;
+                if(possibleAmounts.length > 0) {
+                    maxAmount = Math.max(...possibleAmounts);
+                }
+
+                if (maxAmount > 0) {
+                    document.getElementById('input-jumlah').value = maxAmount;
+                    showToast(`Total ditemukan: ${formatRupiah(maxAmount)}`);
+                } else {
+                    showToast("Gagal baca angka. Input manual.");
+                }
+
+                const firstLine = lines.find(l => l.length > 4 && l.length < 30) || "Struk Belanja";
+                const cleanDesc = firstLine.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+                document.getElementById('input-keterangan').value = cleanDesc + " [Scan]";
+
+            } catch (e) {
+                console.error(e);
+                showToast("Gagal memproses gambar.");
+            } finally {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function resizeImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 600; 
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scaleSize;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.6)); 
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function translateStatus(status) {
+            const map = {
+                'loading tesseract core': 'Memuat sistem...',
+                'initializing api': 'Inisialisasi...',
+                'recognizing text': 'Membaca tulisan...',
+                'loading language traineddata': 'Memuat bahasa...'
+            };
+            return map[status] || status;
+        }
+
+        function clearImage() {
+            currentFile = null;
+            document.getElementById('struk-input').value = '';
+            document.getElementById('preview-container').classList.add('hidden');
+            document.getElementById('preview-image').src = '';
+        }
+
         // --- DOWNLOAD REPORT ---
         function downloadReport() {
-            // Gunakan viewDate yang sedang aktif di dashboard
-            const currentMonthIdx = viewDate.getMonth();
-            const currentYear = viewDate.getFullYear();
+            const now = new Date();
+            const currentMonthIdx = now.getMonth();
+            const currentYear = now.getFullYear();
             const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
             const monthName = monthNames[currentMonthIdx];
 
@@ -559,7 +685,7 @@
             });
 
             if (monthlyData.length === 0) {
-                showToast(`Belum ada data ${monthName} ${currentYear}!`);
+                showToast("Belum ada data bulan ini!");
                 return;
             }
 
@@ -621,8 +747,6 @@
                 { Waktu: new Date(Date.now()-86400000).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Belanja', Jumlah: 2000000, Keterangan: 'Belanja Bulanan' },
                 { Waktu: new Date(Date.now()-172800000).toISOString(), User: 'Suami', Tipe: 'Pengeluaran', Kategori: 'Transport', Jumlah: 100000, Keterangan: 'Isi Bensin Mobil' },
                 { Waktu: new Date(Date.now()-345600000).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Anak', Jumlah: 500000, Keterangan: 'Susu & Popok' },
-                // Transaksi Bulan Lalu (Untuk Test Navigasi)
-                { Waktu: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString(), User: 'Istri', Tipe: 'Pengeluaran', Kategori: 'Sayur', Jumlah: 75000, Keterangan: 'Beli Sayur Pasar Bulan Lalu' },
             ];
             transactions=tr; 
             localStorage.setItem('transactions', JSON.stringify(tr)); 
@@ -653,47 +777,15 @@
                 if(t.Tipe === 'Pengeluaran') groups[k].total += Number(t.Jumlah);
             });
 
-            // NEW: Collapse Logic (Expand first, others collapsed)
-            const sortedKeys = Object.keys(groups).sort().reverse();
-            
-            sortedKeys.forEach((k, index) => {
+            Object.keys(groups).sort().reverse().forEach(k => {
                 const g = groups[k];
-                const isFirst = index === 0; // Expand only the first month
-                const displayStyle = isFirst ? 'block' : 'hidden';
-                const rotateClass = isFirst ? 'rotate-180' : '';
-                
-                // Header with onclick
-                const headerHtml = `
-                    <div onclick="toggleHistoryGroup('${k}')" class="mt-4 mb-2 flex justify-between items-end border-b border-gray-200 dark:border-gray-700 pb-1 cursor-pointer select-none group">
-                        <div class="flex items-center gap-2">
-                            <h4 class="font-bold text-gray-600 dark:text-gray-300 text-sm uppercase tracking-wide">${g.label}</h4>
-                            <i id="icon-${k}" class="fas fa-chevron-down text-gray-400 text-xs transition-transform ${rotateClass}"></i>
-                        </div>
-                        <span class="text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded">
-                            Keluar: ${formatRupiah(g.total)}
-                        </span>
-                    </div>
-                `;
-                cont.insertAdjacentHTML('beforeend', headerHtml);
-
-                // Container for Items
-                let itemsHtml = `<div id="group-${k}" class="${displayStyle} space-y-2">`;
+                cont.insertAdjacentHTML('beforeend', `<div class="mt-4 mb-2 flex justify-between items-end border-b border-gray-200 dark:border-gray-700 pb-1"><h4 class="font-bold text-gray-600 dark:text-gray-300 text-sm uppercase tracking-wide">${g.label}</h4><span class="text-xs font-bold text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-0.5 rounded">Keluar: ${formatRupiah(g.total)}</span></div>`);
                 g.items.forEach(t => {
                     const isExp = t.Tipe === 'Pengeluaran';
                     const badge = `<span class="text-[10px] ${t.User==='Suami'?'bg-blue-100 text-blue-700':'bg-pink-100 text-pink-700'} px-2 py-0.5 rounded-full ml-1 font-bold">${t.User||'?'}</span>`;
-                    itemsHtml += `<div class="flex items-center justify-between bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 dark:bg-gray-700 text-gray-500"><i class="fas ${getCategoryIcon(t.Kategori)}"></i></div><div><div class="font-bold text-sm dark:text-gray-200 flex items-center gap-1">${t.Kategori} ${badge}</div><div class="text-xs text-gray-400">${t.Keterangan||t.Tipe} • ${new Date(t.Waktu).getDate()}</div></div></div><div class="font-bold ${isExp?'text-red-600':'text-green-600'}">${isExp?'-':'+'} ${formatRupiah(t.Jumlah)}</div></div>`;
+                    cont.insertAdjacentHTML('beforeend', `<div class="flex items-center justify-between bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm mb-2"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 dark:bg-gray-700 text-gray-500"><i class="fas ${getCategoryIcon(t.Kategori)}"></i></div><div><div class="font-bold text-sm dark:text-gray-200 flex items-center gap-1">${t.Kategori} ${badge}</div><div class="text-xs text-gray-400">${t.Keterangan||t.Tipe} • ${new Date(t.Waktu).getDate()}</div></div></div><div class="font-bold ${isExp?'text-red-600':'text-green-600'}">${isExp?'-':'+'} ${formatRupiah(t.Jumlah)}</div></div>`);
                 });
-                itemsHtml += `</div>`;
-                cont.insertAdjacentHTML('beforeend', itemsHtml);
             });
-        }
-
-        // NEW: Toggle Function
-        function toggleHistoryGroup(key) {
-            const group = document.getElementById(`group-${key}`);
-            const icon = document.getElementById(`icon-${key}`);
-            group.classList.toggle('hidden');
-            icon.classList.toggle('rotate-180');
         }
 
         function renderChart(filter='all') {
@@ -762,7 +854,7 @@
         const form = document.getElementById('transaction-form');
         form.addEventListener('submit', e => {
             e.preventDefault();
-            if(!scriptURL || scriptURL === 'PASTE_URL_WEB_APP_DISINI') { showToast("Hubungkan Database dulu!"); return; }
+            if(!scriptURL || scriptURL === 'PASTE_URL_WEB_APP_DISINI') { showToast("Edit URL di kode HTML dulu!"); return; }
             const btn = document.getElementById('btn-submit'); const loader = document.getElementById('submit-loader');
             btn.disabled = true; loader.classList.remove('hidden');
             
@@ -780,12 +872,14 @@
             
             // Handle image logic - append text to Keterangan if file selected
             // (Only visual marker, real upload needs different backend logic)
-            // Removed currentFile logic for simplicity unless requested again with complex backend
+            if (currentFile) {
+                data.Keterangan = (data.Keterangan || "") + " [Ada Foto Struk]";
+            }
 
             fetch(scriptURL, { method: 'POST', body: fd }).then(r => r.json()).then(res => {
                 if(res.result === 'success') {
                     transactions.unshift(data); localStorage.setItem('transactions', JSON.stringify(transactions));
-                    showToast("Tersimpan!"); form.reset(); 
+                    showToast("Tersimpan!"); form.reset(); clearImage(); 
                     document.getElementById('input-tanggal').value = new Date().toISOString().split('T')[0];
                     navTo('home'); renderDashboard(); renderHistory(currentHistoryFilter);
                 } else {
@@ -821,6 +915,21 @@
             document.getElementById('res-40').innerText = formatRupiah(total * 0.4);
             document.getElementById('res-10').innerText = formatRupiah(incI * 0.1);
             document.getElementById('calc-results').classList.remove('hidden');
+        }
+        
+        // FIXED EXPENSES FUNCTIONS
+        function toggleFixedExpenses() { document.getElementById('fixed-expenses-modal').classList.toggle('hidden'); }
+        function saveFixedExpenses() {
+            fixedExpenses = {
+                groceries: Number(document.getElementById('fix-groceries').value || 0),
+                bills: Number(document.getElementById('fix-bills').value || 0),
+                transport: Number(document.getElementById('fix-transport').value || 0),
+                data: Number(document.getElementById('fix-data').value || 0)
+            };
+            localStorage.setItem('fixedExpenses', JSON.stringify(fixedExpenses));
+            showToast("Pos Tetap Disimpan!");
+            toggleFixedExpenses();
+            // No budget render anymore, just toast
         }
     </script>
 </body>
